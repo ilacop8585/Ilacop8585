@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - bridge-build-210
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
