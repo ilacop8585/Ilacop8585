@@ -19,9 +19,7 @@
 ## Profilo istituzionale
 
 **N.E.X.U.S.** è un ecosistema internazionale concepito per integrare competenze, sistemi e processi ad alto valore all’interno di un’architettura comune, riservata e professionalmente strutturata.
-
 La piattaforma nasce per sostenere lo sviluppo responsabile di tecnologie avanzate, la cooperazione tra discipline differenti e la costruzione di infrastrutture digitali affidabili, modulari e verificabili. Il suo obiettivo è trasformare conoscenza, ricerca e innovazione in capacità coordinate, preservando sicurezza, continuità operativa, responsabilità e controllo.
-
 N.E.X.U.S. rappresenta il livello centrale di un ecosistema progettato per evolvere nel tempo, con una visione internazionale e un’impostazione orientata alla qualità, alla resilienza e alla protezione degli asset strategici.
 
 ## Visione
