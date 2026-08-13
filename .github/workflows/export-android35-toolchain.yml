@@ -1,0 +1,24 @@
+name: Export Android 35 Build Tools
+on:
+  push:
+    branches: [ infra/android-toolchain-dragon-v5 ]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android35-build-tools
+          path: |
+            ${{ env.ANDROID_HOME }}/platforms/android-35/android.jar
+            ${{ env.ANDROID_HOME }}/build-tools/35.0.0
+          if-no-files-found: error
+          retention-days: 1
