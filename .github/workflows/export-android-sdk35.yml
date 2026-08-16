@@ -1,0 +1,61 @@
+name: Export Android SDK35 Toolchain
+
+on:
+  push:
+    branches:
+      - infra/android-sdk35-export-20260817
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export-sdk:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: infra/android-sdk35-export-20260817
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install official Platform 35 and Build Tools 35.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Package minimal offline compiler toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf sdk35-export sdk35-export.tar.xz SHA256SUMS-SDK35.txt
+          mkdir -p sdk35-export/platforms/android-35
+          mkdir -p sdk35-export/build-tools/35.0.0/lib
+          cp "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" sdk35-export/platforms/android-35/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" sdk35-export/build-tools/35.0.0/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/d8" sdk35-export/build-tools/35.0.0/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/d8.jar" sdk35-export/build-tools/35.0.0/lib/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/apksigner" sdk35-export/build-tools/35.0.0/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/apksigner.jar" sdk35-export/build-tools/35.0.0/lib/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/zipalign" sdk35-export/build-tools/35.0.0/
+          cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/source.properties" sdk35-export/build-tools/35.0.0/
+          chmod +x sdk35-export/build-tools/35.0.0/aapt2 sdk35-export/build-tools/35.0.0/d8 sdk35-export/build-tools/35.0.0/apksigner sdk35-export/build-tools/35.0.0/zipalign
+          tar -C sdk35-export -cJf sdk35-export.tar.xz .
+          sha256sum sdk35-export.tar.xz > SHA256SUMS-SDK35.txt
+          du -h sdk35-export.tar.xz
+
+      - name: Commit export to temporary branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sdk35-export.tar.xz SHA256SUMS-SDK35.txt
+          git commit -m "Export official Android SDK 35 compiler subset" || exit 0
+          git push origin HEAD:infra/android-sdk35-export-20260817
