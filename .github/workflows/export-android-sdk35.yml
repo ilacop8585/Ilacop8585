@@ -37,6 +37,7 @@ jobs:
           rm -rf sdk35-export sdk35-export.tar.xz SHA256SUMS-SDK35.txt
           mkdir -p sdk35-export/platforms/android-35
           mkdir -p sdk35-export/build-tools/35.0.0/lib
+          mkdir -p sdk35-export/build-tools/35.0.0/lib64
           cp "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" sdk35-export/platforms/android-35/
           cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/aapt2" sdk35-export/build-tools/35.0.0/
           cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/d8" sdk35-export/build-tools/35.0.0/
@@ -45,6 +46,9 @@ jobs:
           cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/lib/apksigner.jar" sdk35-export/build-tools/35.0.0/lib/
           cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/zipalign" sdk35-export/build-tools/35.0.0/
           cp "$ANDROID_SDK_ROOT/build-tools/35.0.0/source.properties" sdk35-export/build-tools/35.0.0/
+          LIBCPP="$(find "$ANDROID_SDK_ROOT/build-tools/35.0.0" -type f -name 'libc++.so' | head -n 1)"
+          test -n "$LIBCPP"
+          cp "$LIBCPP" sdk35-export/build-tools/35.0.0/lib64/libc++.so
           chmod +x sdk35-export/build-tools/35.0.0/aapt2 sdk35-export/build-tools/35.0.0/d8 sdk35-export/build-tools/35.0.0/apksigner sdk35-export/build-tools/35.0.0/zipalign
           tar -C sdk35-export -cJf sdk35-export.tar.xz .
           sha256sum sdk35-export.tar.xz > SHA256SUMS-SDK35.txt
@@ -53,7 +57,7 @@ jobs:
       - name: Upload toolchain transport artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-sdk35-offline-compiler
+          name: android-sdk35-offline-compiler-libcpp
           path: |
             sdk35-export.tar.xz
             SHA256SUMS-SDK35.txt
@@ -67,5 +71,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add sdk35-export.tar.xz SHA256SUMS-SDK35.txt
-          git commit -m "Refresh official Android SDK 35 compiler subset" || exit 0
+          git commit -m "Refresh SDK35 export with zipalign runtime" || exit 0
           git push origin HEAD:infra/android-sdk35-export-20260817
