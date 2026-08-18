@@ -1,0 +1,85 @@
+name: Temporary LUMEN APK Build
+
+on:
+  push:
+    branches: [lumen-apk-build-temp]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout encrypted payload
+        uses: actions/checkout@v4
+
+      - name: Fetch temporary build key
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL 'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-build-source-temp?token=RMe8tuY4zMsrFWlmC0V0nPexPZbT1MQW6Z5WZhnN5QI' -o /tmp/lumen.key
+          test -s /tmp/lumen.key
+
+      - name: Decrypt and verify LUMEN source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat lumen-temp-build/part.00 lumen-temp-build/part.01 lumen-temp-build/part.02 lumen-temp-build/part.03 lumen-temp-build/part.04 lumen-temp-build/part.05 lumen-temp-build/part.06 > /tmp/lumen-src.enc.b64
+          test "$(wc -c < /tmp/lumen-src.enc.b64)" -eq 20268
+          base64 -d /tmp/lumen-src.enc.b64 > /tmp/lumen-src.tar.gz.enc
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in /tmp/lumen-src.tar.gz.enc -out /tmp/lumen-src.tar.gz -pass file:/tmp/lumen.key
+          rm -f /tmp/lumen.key
+          echo 'd6f0c004da585627ba8099e218da42382f6b434082bfca70e4a74b846a82694f  /tmp/lumen-src.tar.gz' | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/lumen"
+          tar -xzf /tmp/lumen-src.tar.gz -C "$RUNNER_TEMP/lumen"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK 37
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37 build-tools;36.0.0'
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+
+      - name: Build LUMEN APK
+        shell: bash
+        working-directory: ${{ runner.temp }}/lumen
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify and stage APK
+        shell: bash
+        working-directory: ${{ runner.temp }}/lumen
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          test -s "$APK"
+          mkdir -p "$RUNNER_TEMP/out"
+          cp "$APK" "$RUNNER_TEMP/out/LUMEN-ACCESSIBILITY-v0.1.apk"
+          sha256sum "$RUNNER_TEMP/out/LUMEN-ACCESSIBILITY-v0.1.apk" | tee "$RUNNER_TEMP/out/LUMEN-ACCESSIBILITY-v0.1.sha256"
+          if command -v apksigner >/dev/null 2>&1; then
+            apksigner verify --verbose "$RUNNER_TEMP/out/LUMEN-ACCESSIBILITY-v0.1.apk"
+          fi
+
+      - name: Upload LUMEN APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LUMEN-ACCESSIBILITY-v0.1
+          path: |
+            ${{ runner.temp }}/out/LUMEN-ACCESSIBILITY-v0.1.apk
+            ${{ runner.temp }}/out/LUMEN-ACCESSIBILITY-v0.1.sha256
+          if-no-files-found: error
