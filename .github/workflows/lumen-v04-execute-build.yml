@@ -1,0 +1,91 @@
+name: Temporary LUMEN v0.4.1 EXECUTE Build
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout build harness
+        uses: actions/checkout@v4
+
+      - name: Fetch canonical private LUMEN source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lumen-src
+          curl --fail --show-error --silent --location --retry 2 \
+            'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-private-source-temp?k=4NHduy4IGOO75cZR3SJ8XDe_0ZMml6lS' \
+            -o /tmp/lumen-source.zip
+          test -s /tmp/lumen-source.zip
+          unzip -q /tmp/lumen-source.zip -d /tmp/lumen-src
+          ROOT="$(find /tmp/lumen-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+          test -n "$ROOT"
+          cp -a "$ROOT/." "$GITHUB_WORKSPACE/lumen/"
+          test -f "$GITHUB_WORKSPACE/lumen/settings.gradle.kts"
+          test -f "$GITHUB_WORKSPACE/lumen/app/build.gradle.kts"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK 36
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+
+      - name: Build canonical LUMEN APK
+        working-directory: lumen
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify APK
+        working-directory: lumen
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          file "$APK"
+          unzip -t "$APK" >/dev/null
+          if command -v apksigner >/dev/null 2>&1; then
+            apksigner verify --verbose "$APK"
+          elif [ -x "$ANDROID_HOME/build-tools/36.0.0/apksigner" ]; then
+            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
+          fi
+          sha256sum "$APK" | tee app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
+          {
+            echo "LUMEN ACCESSIBILITY v0.4.1 EXECUTE"
+            echo "canonical_repo=ilacop8585/lumen-accessibility-android"
+            echo "canonical_branch=lumen-v0.4-aura"
+            echo "built_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            sha256sum "$APK"
+          } > app/build/outputs/apk/debug/BUILD_REPORT.txt
+          cp "$APK" app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk
+
+      - name: Upload verified APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE
+          path: |
+            lumen/app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk
+            lumen/app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
+            lumen/app/build/outputs/apk/debug/BUILD_REPORT.txt
+          if-no-files-found: error
