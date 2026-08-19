@@ -1,0 +1,66 @@
+name: LUMEN v0.4.1 R4 Build
+on:
+  pull_request:
+    branches: [ main ]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and decrypt source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '56b5247954b30a0c16eda4ee00525022206379d533847b51397904936c9bde62  payload-v041-r3/part.000' | sha256sum -c -
+          echo '95b39ad90b42ae1f7b057beaa187ef6d1c2be89fe0e1af4ace92997680aeec0a  payload-v041-r3/part.001' | sha256sum -c -
+          echo '1e13589be567e21e902806332793241e078db98c8e0c1232b687fa1d1201d360  payload-v041-r3/part.002' | sha256sum -c -
+          echo '9c5d4538fd610d0101177960498febc3d14cf83a6d77ae5817f1e58c00924023  payload-v041-r4/part.000' | sha256sum -c -
+          echo 'f9b451ddeb24badf1d7d4c6d87188c712c49d2938d040fe4b27786c80b928077  payload-v041-r4/part.001' | sha256sum -c -
+          echo '566e6039eeb04c5925c9f38ec71fe08a0dbd61f03cfeddb508766d03846f45bb  payload-v041-r4/part.002' | sha256sum -c -
+          echo '22312ac0e25acb65c1e5ff35a038acf33fb5fcd38032ddad202ac9b26bf26829  payload-v041-r4/part.003' | sha256sum -c -
+          echo '7cae5337f9c7cf13323b2ba95b087f9b29b029186f26f4f3585210dc344dd9d3  payload-v041-r4/part.004' | sha256sum -c -
+          cat payload-v041-r3/part.000 payload-v041-r3/part.001 payload-v041-r3/part.002 payload-v041-r4/part.* | tr -d '\r\n' | base64 -d > /tmp/lumen.enc
+          echo '90fd5dd63bd071b37494be77c210b2c3f92fde187b729a98dce1d48373784dc6  /tmp/lumen.enc' | sha256sum -c -
+          curl --fail --silent --show-error --location 'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-build-key-v041-temp?token=ce712ce9a30ef5575d84f3d00110fcab376f3a5c81504709' -o /tmp/lumen.key
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in /tmp/lumen.enc -out /tmp/lumen.tar.gz -pass file:/tmp/lumen.key
+          echo '59f30786803c6e48daaa97d72a437db3adea9fb4a08340695b83f271121ccd8a  /tmp/lumen.tar.gz' | sha256sum -c -
+          mkdir lumen
+          tar -xzf /tmp/lumen.tar.gz -C lumen
+          rm -f /tmp/lumen.key /tmp/lumen.enc
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+      - name: Build
+        working-directory: lumen
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Verify and package
+        working-directory: lumen
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          file "$APK"
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee signer.txt
+          cp "$APK" app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk
+          sha256sum app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk | tee app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
+          { echo 'LUMEN v0.4.1 EXECUTE'; echo 'source_snapshot_sha256=59f30786803c6e48daaa97d72a437db3adea9fb4a08340695b83f271121ccd8a'; cat signer.txt; cat app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256; } > app/build/outputs/apk/debug/BUILD_REPORT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE-R4
+          path: |
+            lumen/app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk
+            lumen/app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
+            lumen/app/build/outputs/apk/debug/BUILD_REPORT.txt
+          if-no-files-found: error
