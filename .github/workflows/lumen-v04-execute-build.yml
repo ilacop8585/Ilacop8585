@@ -59,9 +59,9 @@ jobs:
         run: |
           set -euo pipefail
           BODY="$(curl --fail --show-error --silent --location \
-            -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxdWNrbmRscnJzc2t5dXZicWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MzYwMDMsImV4cCI6MjEwMTAxMjAwM30.iAzS1b_qQK3_iN6smHJ5A60_7AcHGeYwuFLI439uogg' \
-            -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxdWNrbmRscnJzc2t5dXZicWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MzYwMDMsImV4cCI6MjEwMTAxMjAwM30.iAzS1b_qQK3_iN6smHJ5A60_7AcHGeYwuFLI439uogg' \
-            'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-red-queen')"
+            -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bXZxeXNydm1va2R2YmNiY2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDE1MTksImV4cCI6MjEwMjAxNzUxOX0.4GRPadU_3xK9AFEJM48mKEdB920_-d35duqMrVSzicc' \
+            -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bXZxeXNydm1va2R2YmNiY2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDE1MTksImV4cCI6MjEwMjAxNzUxOX0.4GRPadU_3xK9AFEJM48mKEdB920_-d35duqMrVSzicc' \
+            'https://cumvqysrvmokdvbcbcdt.supabase.co/functions/v1/lumen-red-queen')"
           python3 - "$BODY" <<'PY'
           import json,sys
           x=json.loads(sys.argv[1])
