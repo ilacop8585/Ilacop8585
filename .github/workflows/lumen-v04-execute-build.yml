@@ -17,21 +17,61 @@ jobs:
       - name: Checkout build harness
         uses: actions/checkout@v4
 
-      - name: Fetch canonical private LUMEN source
+      - name: Reconstruct canonical private LUMEN source
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/lumen-src
-          curl --fail --show-error --silent --location --retry 2 \
-            'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-private-source-temp?k=4NHduy4IGOO75cZR3SJ8XDe_0ZMml6lS' \
-            -o /tmp/lumen-source.zip
-          test -s /tmp/lumen-source.zip
-          unzip -q /tmp/lumen-source.zip -d /tmp/lumen-src
-          ROOT="$(find /tmp/lumen-src -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-          test -n "$ROOT"
-          cp -a "$ROOT/." "$GITHUB_WORKSPACE/lumen/"
-          test -f "$GITHUB_WORKSPACE/lumen/settings.gradle.kts"
-          test -f "$GITHUB_WORKSPACE/lumen/app/build.gradle.kts"
+          ROOT="$GITHUB_WORKSPACE/lumen"
+          mkdir -p "$ROOT/app/src/main/java/it/lumen/accessibility/accessibility" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/ai" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/assistant" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/data" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/notifications" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/tts" \
+                   "$ROOT/app/src/main/java/it/lumen/accessibility/ui" \
+                   "$ROOT/app/src/main/res/drawable" \
+                   "$ROOT/app/src/main/res/values" \
+                   "$ROOT/app/src/main/res/xml"
+          get() { curl --fail --show-error --silent --location "$1" -o "$ROOT/$2"; test -s "$ROOT/$2"; }
+
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/build.gradle.kts?token=BEN4DNCMILYCP5YNAUIDJSDKQUFJ5AA' 'build.gradle.kts'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/gradle.properties?token=BEN4DNBMVAI4OEXP7SXRFKLKQUFJ5AA' 'gradle.properties'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/settings.gradle.kts?token=BEN4DNHGQIAPDHFVGKSRFG3KQUFJ5AA' 'settings.gradle.kts'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/build.gradle.kts?token=BEN4DNG6KPIW7XBDYBE4IG3KQUFKNAA' 'app/build.gradle.kts'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/proguard-rules.pro?token=BEN4DNEQQNKNOKKB46TA5VTKQUFKNAA' 'app/proguard-rules.pro'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/AndroidManifest.xml?token=BEN4DNAO34FKKWBFVTXUU2DKQUFKXAA' 'app/src/main/AndroidManifest.xml'
+
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/LumenV04Activity.kt?token=BEN4DNDBO6OPW7BIYD4ZBFLKQUFLDAA' 'app/src/main/java/it/lumen/accessibility/LumenV04Activity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/MainActivity.kt?token=BEN4DNCLF4CAVFLQANX4IKDKQUFLDAA' 'app/src/main/java/it/lumen/accessibility/MainActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/accessibility/AccessibilityButtonHelper.kt?token=BEN4DNCZVQ4A7VX2CMMBSMDKQUFLPAA' 'app/src/main/java/it/lumen/accessibility/accessibility/AccessibilityButtonHelper.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/accessibility/LumenAccessibilityService.kt?token=BEN4DNFI3PVYP4X7AI4OUQDKQUFLPAA' 'app/src/main/java/it/lumen/accessibility/accessibility/LumenAccessibilityService.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ai/RedQueenClient.kt?token=BEN4DNCOLUDMD63AQ3IKRF3KQUFL3AA' 'app/src/main/java/it/lumen/accessibility/ai/RedQueenClient.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionService.kt?token=BEN4DNHJYJ3KK53TUXIAM33KQUFMBAA' 'app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionService.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionSession.kt?token=BEN4DNEKZ2Y6EMS6LEAU2G3KQUFMBAA' 'app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionSession.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionSessionService.kt?token=BEN4DNEEENL6OT7OKOMHIY3KQUFMBAA' 'app/src/main/java/it/lumen/accessibility/assistant/LumenVoiceInteractionSessionService.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/data/LumenPreferences.kt?token=BEN4DNGFCJSSMFVCZAUEOA3KQUFMNAA' 'app/src/main/java/it/lumen/accessibility/data/LumenPreferences.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/notifications/LumenNotificationListener.kt?token=BEN4DNBIUV7JWPZWDXSKUC3KQUFM5AA' 'app/src/main/java/it/lumen/accessibility/notifications/LumenNotificationListener.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/tts/LumenTts.kt?token=BEN4DNCF5JLPALMHEZTQFRLKQUFNJAA' 'app/src/main/java/it/lumen/accessibility/tts/LumenTts.kt'
+
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/CameraAssistActivity.kt?token=BEN4DNGIYRNZXTOZKU3WYXTKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/CameraAssistActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/CloudVoiceActivity.kt?token=BEN4DNDWDY75YY2VRO67I2DKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/CloudVoiceActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/LumenAuraHome.kt?token=BEN4DNATYUHB7GXAQLOZRFDKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/LumenAuraHome.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/LumenSetupV04Activity.kt?token=BEN4DNCYUMBMCKXWNFV5LOTKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/LumenSetupV04Activity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/LumenTheme.kt?token=BEN4DNEHF66NGADKRHJI4X3KQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/LumenTheme.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/SetupActivity.kt?token=BEN4DNH6X23KPUZILJV5633KQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/SetupActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/VoiceCommandActivity.kt?token=BEN4DNBHWGA22JPBNWPRFQ3KQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/VoiceCommandActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/VoiceReplyActivity.kt?token=BEN4DNHYSRDNKUS3LTNSPILKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/VoiceReplyActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/VoiceSettingsActivity.kt?token=BEN4DNDJXCJ5NOXOXKKLRNDKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/VoiceSettingsActivity.kt'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/java/it/lumen/accessibility/ui/WhatsAppComposeActivity.kt?token=BEN4DNBEFUZTUDKBLXB7EKDKQUFNVAA' 'app/src/main/java/it/lumen/accessibility/ui/WhatsAppComposeActivity.kt'
+
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/res/drawable/ic_lumen_notification.xml?token=BEN4DNHQFMZBWJ2GPFJJUHTKQUFOTAA' 'app/src/main/res/drawable/ic_lumen_notification.xml'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/res/values/strings.xml?token=BEN4DNBDGZKNV4VI2CYYQADKQUFPBAA' 'app/src/main/res/values/strings.xml'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/res/xml/accessibility_service_config.xml?token=BEN4DNDX45MNF7SCDN3QAOLKQUFPPAA' 'app/src/main/res/xml/accessibility_service_config.xml'
+          get 'https://raw.githubusercontent.com/ilacop8585/lumen-accessibility-android/lumen-v0.4-aura/app/src/main/res/xml/voice_interaction_service.xml?token=BEN4DNHO42PG54X34TJXOITKQUFPPAA' 'app/src/main/res/xml/voice_interaction_service.xml'
+
+          test -f "$ROOT/settings.gradle.kts"
+          test -f "$ROOT/app/build.gradle.kts"
+          test -f "$ROOT/app/src/main/java/it/lumen/accessibility/ui/CloudVoiceActivity.kt"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -65,17 +105,16 @@ jobs:
           test -s "$APK"
           file "$APK"
           unzip -t "$APK" >/dev/null
-          if command -v apksigner >/dev/null 2>&1; then
-            apksigner verify --verbose "$APK"
-          elif [ -x "$ANDROID_HOME/build-tools/36.0.0/apksigner" ]; then
-            "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK"
-          fi
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" | tee signer.txt
           sha256sum "$APK" | tee app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
           {
             echo "LUMEN ACCESSIBILITY v0.4.1 EXECUTE"
             echo "canonical_repo=ilacop8585/lumen-accessibility-android"
             echo "canonical_branch=lumen-v0.4-aura"
+            echo "canonical_head=04215db8fb9b68a12bb3a8a350220dfc4bd9f630"
             echo "built_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            cat signer.txt
             sha256sum "$APK"
           } > app/build/outputs/apk/debug/BUILD_REPORT.txt
           cp "$APK" app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk
