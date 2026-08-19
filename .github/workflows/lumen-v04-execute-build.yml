@@ -17,20 +17,20 @@ jobs:
       - name: Checkout encrypted build payload
         uses: actions/checkout@v4
 
-      - name: Decrypt and verify LUMEN source
+      - name: Decrypt and verify corrected LUMEN source
         shell: bash
         run: |
           set -euo pipefail
-          cat payload-v041/part.* | tr -d '\r\n' | base64 -d > /tmp/lumen-source.tar.gz.enc
+          cat payload-v041-r2/part.* | tr -d '\r\n' | base64 -d > /tmp/lumen-source.tar.gz.enc
           curl --fail --show-error --silent --location \
-            'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-build-key-v041-temp?token=444b179eaef3da7311be0039867545c90df5de0843c77f35' \
+            'https://xquckndlrrsskyuvbqaz.supabase.co/functions/v1/lumen-build-key-v041-temp?token=ce712ce9a30ef5575d84f3d00110fcab376f3a5c81504709' \
             -o /tmp/lumen-build-key
           test -s /tmp/lumen-build-key
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
             -in /tmp/lumen-source.tar.gz.enc \
             -out /tmp/lumen-source.tar.gz \
             -pass file:/tmp/lumen-build-key
-          echo '09fabf49d1fd43cf5c887cb2b621b7235a73ad768d05da04b7c71c03219e399f  /tmp/lumen-source.tar.gz' | sha256sum -c -
+          echo '59f30786803c6e48daaa97d72a437db3adea9fb4a08340695b83f271121ccd8a  /tmp/lumen-source.tar.gz' | sha256sum -c -
           mkdir -p "$GITHUB_WORKSPACE/lumen"
           tar -xzf /tmp/lumen-source.tar.gz -C "$GITHUB_WORKSPACE/lumen"
           rm -f /tmp/lumen-build-key /tmp/lumen-source.tar.gz.enc
@@ -54,7 +54,7 @@ jobs:
         with:
           gradle-version: '9.5.0'
 
-      - name: Record Red Queen health
+      - name: Record Red Queen reachability
         shell: bash
         run: |
           set -euo pipefail
@@ -70,7 +70,7 @@ jobs:
           print('Red Queen reachable; provider configured =', x.get('openrouter_configured'))
           PY
 
-      - name: Build canonical LUMEN APK
+      - name: Build corrected LUMEN APK
         working-directory: lumen
         shell: bash
         run: |
@@ -94,7 +94,7 @@ jobs:
           HEALTH="$(cat /tmp/red-queen-health.json)"
           {
             echo "LUMEN ACCESSIBILITY v0.4.1 EXECUTE"
-            echo "source_snapshot_sha256=09fabf49d1fd43cf5c887cb2b621b7235a73ad768d05da04b7c71c03219e399f"
+            echo "source_snapshot_sha256=59f30786803c6e48daaa97d72a437db3adea9fb4a08340695b83f271121ccd8a"
             echo "canonical_repo=ilacop8585/lumen-accessibility-android"
             echo "canonical_branch=lumen-v0.4-aura"
             echo "red_queen_health=$HEALTH"
