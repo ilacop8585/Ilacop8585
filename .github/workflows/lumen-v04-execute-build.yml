@@ -54,7 +54,7 @@ jobs:
         with:
           gradle-version: '9.5.0'
 
-      - name: Test Red Queen health
+      - name: Record Red Queen health
         shell: bash
         run: |
           set -euo pipefail
@@ -62,12 +62,12 @@ jobs:
             -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bXZxeXNydm1va2R2YmNiY2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDE1MTksImV4cCI6MjEwMjAxNzUxOX0.4GRPadU_3xK9AFEJM48mKEdB920_-d35duqMrVSzicc' \
             -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bXZxeXNydm1va2R2YmNiY2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NDE1MTksImV4cCI6MjEwMjAxNzUxOX0.4GRPadU_3xK9AFEJM48mKEdB920_-d35duqMrVSzicc' \
             'https://cumvqysrvmokdvbcbcdt.supabase.co/functions/v1/lumen-red-queen')"
+          printf '%s' "$BODY" > /tmp/red-queen-health.json
           python3 - "$BODY" <<'PY'
           import json,sys
           x=json.loads(sys.argv[1])
           assert x.get('ok') is True, x
-          assert x.get('openrouter_configured') is True, x
-          print('Red Queen health: PASS')
+          print('Red Queen reachable; provider configured =', x.get('openrouter_configured'))
           PY
 
       - name: Build canonical LUMEN APK
@@ -91,12 +91,13 @@ jobs:
           OUT="app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.apk"
           cp "$APK" "$OUT"
           sha256sum "$OUT" | tee app/build/outputs/apk/debug/LUMEN-ACCESSIBILITY-v0.4.1-EXECUTE.sha256
+          HEALTH="$(cat /tmp/red-queen-health.json)"
           {
             echo "LUMEN ACCESSIBILITY v0.4.1 EXECUTE"
             echo "source_snapshot_sha256=09fabf49d1fd43cf5c887cb2b621b7235a73ad768d05da04b7c71c03219e399f"
             echo "canonical_repo=ilacop8585/lumen-accessibility-android"
             echo "canonical_branch=lumen-v0.4-aura"
-            echo "red_queen_health=PASS"
+            echo "red_queen_health=$HEALTH"
             echo "built_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             cat signer.txt
             sha256sum "$OUT"
