@@ -1,0 +1,54 @@
+name: Android35 Toolchain Export 20260822
+
+on:
+  push:
+    branches:
+      - infra/android35-export-20260822
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install exact SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Package exact components
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          test -f "$SDK/platforms/android-35/android.jar"
+          test -x "$SDK/build-tools/35.0.0/aapt2"
+          test -x "$SDK/build-tools/35.0.0/zipalign"
+          test -f "$SDK/build-tools/35.0.0/lib/apksigner.jar"
+          mkdir -p export/platforms/android-35 export/build-tools/35.0.0
+          cp "$SDK/platforms/android-35/android.jar" export/platforms/android-35/
+          test ! -f "$SDK/platforms/android-35/package.xml" || cp "$SDK/platforms/android-35/package.xml" export/platforms/android-35/
+          cp -a "$SDK/build-tools/35.0.0/." export/build-tools/35.0.0/
+          printf 'platform=android-35\nbuild_tools=35.0.0\n' > export/TOOLCHAIN_VERSION.txt
+          tar -C export -czf android35-toolchain-20260822.tar.gz .
+          sha256sum android35-toolchain-20260822.tar.gz > android35-toolchain-20260822.tar.gz.sha256
+          "$SDK/build-tools/35.0.0/aapt2" version
+          java -cp "$SDK/build-tools/35.0.0/lib/d8.jar" com.android.tools.r8.D8 --version || true
+          cat android35-toolchain-20260822.tar.gz.sha256
+
+      - name: Upload toolchain artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android35-toolchain-20260822
+          path: |
+            android35-toolchain-20260822.tar.gz
+            android35-toolchain-20260822.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
