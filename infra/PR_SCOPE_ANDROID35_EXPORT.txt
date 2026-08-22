@@ -1,0 +1,5 @@
+TEMPORARY INFRASTRUCTURE ONLY
+Purpose: export official Android Platform 35 and Build Tools 35.0.0.
+NEXUS Capital source: NOT PRESENT.
+Merge into main: NOT REQUIRED.
+Automatic spend: EUR 0.
