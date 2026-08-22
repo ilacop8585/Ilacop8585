@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - infra/android35-export-20260822
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
