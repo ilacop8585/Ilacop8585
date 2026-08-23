@@ -1,0 +1,46 @@
+name: NEXUS Capital FIX360 v2 distribution
+
+on:
+  push:
+    branches:
+      - nexus-capital-fix360-v2-dist
+    paths:
+      - 'nexus-capital-dist/fix360-v2/chunks/**'
+      - '.github/workflows/nexus-capital-fix360-v2-dist.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nexus-capital-fix360-v2-dist
+          fetch-depth: 0
+
+      - name: Rebuild exact APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p nexus-capital-dist/fix360-v2/release
+          cat nexus-capital-dist/fix360-v2/chunks/part-* \
+            | base64 --decode \
+            > nexus-capital-dist/fix360-v2/release/NEXUS_CAPITAL_ROUTER1_FIX360_V2.apk
+          echo '37e973c2fa0a4155f697e4d9daa816bc447b5adeea3d24f876bd263ad9b3fae4  nexus-capital-dist/fix360-v2/release/NEXUS_CAPITAL_ROUTER1_FIX360_V2.apk' \
+            | sha256sum --check --strict
+
+      - name: Publish verified APK to distribution branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'NEXUS Capital Build'
+          git config user.email 'noreply@users.noreply.github.com'
+          git add nexus-capital-dist/fix360-v2/release/NEXUS_CAPITAL_ROUTER1_FIX360_V2.apk
+          if git diff --cached --quiet; then
+            echo 'APK already current'
+            exit 0
+          fi
+          git commit -m 'Publish verified NEXUS Capital FIX360 v2 APK'
+          git push origin HEAD:nexus-capital-fix360-v2-dist
