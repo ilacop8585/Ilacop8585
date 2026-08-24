@@ -1,0 +1,51 @@
+name: Export Android SDK 35 Toolchain V14
+
+on:
+  push:
+    branches:
+      - infra/android-sdk35-export-20260824-v14
+
+permissions:
+  contents: read
+
+jobs:
+  export-toolchain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install exact Android components
+        shell: bash
+        run: |
+          set -euxo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Export bounded toolchain only
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          mkdir -p export/build-tools/35.0.0 export/platforms/android-35
+          cp "$ROOT/build-tools/35.0.0/aapt2" export/build-tools/35.0.0/
+          cp "$ROOT/build-tools/35.0.0/zipalign" export/build-tools/35.0.0/
+          cp "$ROOT/build-tools/35.0.0/apksigner" export/build-tools/35.0.0/
+          cp "$ROOT/build-tools/35.0.0/d8" export/build-tools/35.0.0/
+          cp -r "$ROOT/build-tools/35.0.0/lib" export/build-tools/35.0.0/
+          cp "$ROOT/platforms/android-35/android.jar" export/platforms/android-35/
+          (cd export && sha256sum build-tools/35.0.0/aapt2 build-tools/35.0.0/zipalign build-tools/35.0.0/apksigner build-tools/35.0.0/d8 platforms/android-35/android.jar > SHA256SUMS.txt)
+          (cd export && zip -qr ../android-sdk35-toolchain.zip .)
+          sha256sum android-sdk35-toolchain.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-sdk35-toolchain-v14
+          path: android-sdk35-toolchain.zip
+          if-no-files-found: error
+          retention-days: 1
