@@ -1,0 +1,55 @@
+name: Build Temporary Friend Sticker Importer
+
+on:
+  push:
+    branches:
+      - temp/friend-sticker-importer-20260825
+    paths:
+      - 'temp-friend-sticker-importer/**'
+      - '.github/workflows/temp-friend-sticker-importer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        working-directory: temp-friend-sticker-importer
+        run: gradle --no-daemon :app:assembleDebug --stacktrace
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p output
+          cp temp-friend-sticker-importer/app/build/outputs/apk/debug/app-debug.apk output/FRIEND_REACTIONS_INSTALLER_TEST.apk
+          sha256sum output/FRIEND_REACTIONS_INSTALLER_TEST.apk > output/FRIEND_REACTIONS_INSTALLER_TEST.apk.sha256
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FRIEND-REACTIONS-INSTALLER-TEST
+          path: output/*
+          if-no-files-found: error
+          retention-days: 7
