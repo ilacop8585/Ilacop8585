@@ -53,6 +53,12 @@ Costruire una rete internazionale capace di connettere persone, competenze e tec
 
 Ogni componente dell’ecosistema viene concepito secondo criteri di separazione degli ambienti, minimo privilegio, controllo delle modifiche, continuità operativa e protezione degli asset strategici.
 
+## Servizio digitale disponibile
+
+È disponibile un **piano viaggio digitale personalizzato** basato su destinazione, periodo e preferenze indicate dal cliente. Il servizio riguarda la preparazione del piano digitale e **non include voli, hotel, prenotazioni o servizi di agenzia**.
+
+[Richiedi il piano viaggio digitale tramite il checkout Stripe](https://buy.stripe.com/7sY4gz3n1btyf7A5w4dby00)
+
 ## Profilo pubblico e nucleo privato
 
 Questo profilo presenta esclusivamente l’identità pubblica e la visione istituzionale di N.E.X.U.S.
